@@ -1,0 +1,27 @@
+\chapter{Cryptography & Society}
+
+\section{Introduction}
+
+Integrity: The receiver can check if the message has been tampered with. Also the receiver can check if the message received is truly from the source I think it is and this becomes a problem of authentication.
+
+
+
+Base of all cryptography algorith lies in the secrecy of keys, not the algorithm.
+
+P: set of plaintexts
+C: set of ciphertexts
+enc: P->C
+dec: C->P
+
+dec(enc(m)) = m for every m in P
+
+There is a problem with this formalization: these two functions, must be kept secret. These function can be used to create a secure channel, but how do you share these function? We need a secure channel, but if we had a secure channel, why not use it in the first place!
+
+The wayout is to have functions that use as input a key, so a parametric function, so that for the same plaintext and different keys, we get a different ciphertext. So the function can be public, completly transparent, and we need to protect only keys.
+
+
+
+
+
+
+
