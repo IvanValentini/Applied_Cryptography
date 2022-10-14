@@ -117,5 +117,97 @@ First we want to tackle the problem of generating a randomly a key (known as key
 The first output bits strongly depend on the initial state. To avoid potential problems, it is customary to run a warm-up phase before starting encryption. This preliminary phase consists in applying the update function several times without outputting any bits of keystream and it is a highly recommended security best practice.
 Given any initial state, the states are periodic, since they are in a finite number and at some point we will obtain again one of the previous states. The keystream is also periodic... this is impossible to avoid. The smallest number $i$ such that $update(...(update(S)))=S$ is called the period of the keystream (it depends on the initial state), and as a requirement is that the period of the keystream shall be quite large, regardless of the initial state, and can be achieved by a suitable design of the update function.
 As an example let's take an un update function as follows $f: (x,y,z) \Rightarrow (y+z,x,y)$. One can see that the repeated application of $f$ to the inital state $(1,0,1)$ will yield $(1,0,1) \Rightarrow (1,1,0) \Rightarrow (1,1,1) \Rightarrow (0,1,1) \Rightarrow (0,0,1) \Rightarrow (1,0,0) \Rightarrow (0,1,0) \Rightarrow (1,0,1)$ with a period of 7.
+We are using linear functions because they are easy to implement and compute.
+
+\section{Linear feedback shift register}
+
+A linear feedback shift register of length n is a shift register composed by n bits.
+Type of digital circuit using a cascade of flip flops where the output of one flip-flop is connected to the input of the next.
+Flip-flops share a single clock signal, which causes the data stored in the system to shift from one location to the next.
+
+Now we add the linear feedback function.
+
+A linear-feedback shift register (LFSR) is a shift register whose input bit is a linear function of its previous state. Essentialy feed the output of flip flops to the linear function.
+
+The most commonly used linear function of single
+bits is xor. An LFSR is usually a shift register whose input bit is driven by the xor of some bits of the overall
+shift register value. The initial value of the LFSR is called the seed. Since the operation of the register is deterministic, the stream of values produced by the register is completely determined by its current (or previous) state.
+
+Return the output of the linear function as input to the first flip flop.
+
+
+\section{LSR and finite fields}
+
+Longest possible cycle.
+We have a finite set of states, and an uodate function, we want a function that genertes all possible elements in the set, and repeats as late as possible.
+
+
+The algebraic stucture we are using is multiplication modulo a prime.
+What we need are polynomial over a Galois field.
+If you multiply a polinomial with a monomial is "equal" to the shift right operation.
+
+Mathemaricians provided a table for each number of bits and a polynomial to generate all possibile polynomials.
+
+Important: these functions are guaranteed to generate the longes possibile sequence with a fixed number of bits.
+
+
+Take the number of flipflops that we need, put a linear feedback function that is a linear combination of the registers. For 4 registers we have x^4 + x^3 + 1 and taps are 1100. So we consider only the output of the first two registers to the left. So first we perform and AND operation with 1100 and finally a xor operation and we are guaranteed to generate the longest sequence. But is this a good idea? 
+
+No, attacks to this are very easy. We'll use 128 bits but as of now we offer very low protection.
+
+Exploit the connection with linear algebra.
+Collect enough bits and then by solving a bunch of equations recover the seed. So recover the seed in polynomial time.
+
+Linearity is good because it is easy to implement, but on the other hand is not secure enough.
+
+
+Consider two linear shift register, and run them in parallel and combine the result of the two with a non linear operation. The 40 bit seed is distributed to the two registers.
+
+
+
+\section{A5 Family of Ciphers}
+
+GSM = Global System for Mobile communication (ETSI standard).
+
+We generate a new session every time? Because if the attacker breaks one session, he breaks every other session.
+
+
+An algorithm of the A5 family takes § the session key Kc (symmetric) and a frame counter Fn generates § 228 pseudo random bits (PRAND), called a key stream.
+The key stream is then XORed with a 228 bit segment of plain text, yielding 228 bits of ciphertext.
+
+Members of the A5 family differs on how GEN is implemented, thereby providing different levels of security.
+
+
+A5/2 after a month an attack was found that could break the cipher almost in real time.
+
+A5/3 is the last stream cipher of the A5 family and provides users with a higher level of security than both A5/1 and A5/2. It is based on the block cipher KASUMI. 
+
+
+\section{Remarks on the A5 Family}
+
+The generated key (Kc) is the main flaw of the design:
+\begin{itemize}
+	\item Maximal exhaustive search complexity is (only) $2^(64)$
+	\item  Kc generated only once after the cell phone registers with the network and stays active for all communication, until the telco requests a new one or the cell phone deregisters 
+	\item Kc is artificially shortened in deployed systems when zeroing 10 bits, lowering search complexity to $2^(54)$
+	\item Encryption is applied after error correction
+	\item A5/2 is extremely weak and it can be broken in real time with inexpensive equipment; it is therefore no longer supported by new mobile phones
+	\item A5/1 is affected by a number of serious weaknesses, and its use is strongly discouraged, since there are practical attacks that can break the cipher
+	\item  A5/3 is the common standard for the new generation of mobile and it is considered secure, even though there do exist practical attacks to KASUMI that suggest some significant weaknesses of the cipher
+\end{itemize}
+
+\section{Practicality of attacking GSM communication}
+
+In theory, the attacks are relatively simple
+In practice, a considerable amount of hardware is necessary to actually intercept GSM communications
+The hardware must at least consist of a radio receiver device which is capable of receiving and decoding digital data that is exchanged over-the-air by using one of the attacks reported above
+Hypothetically a simple GSM mobile phone already has all these capabilities (except the decrypting of an unknown A5 stream), so it might be possible to use such a phone for eavesdropping
+Nevertheless a huge amount of know-how, time and money is needed
+
+\section{Bluetooth}
+Bluetooth is a wireless technology standard invented by Ericsson in 1994 for exchanging data over short distances using short-wavelength UHF radio waves (Range: 2.4 to 2.485 GHz) from fixed and mobile devices.
+The standard offers methods for generating keys, authenticating users, and encrypting data.
+
+
 
 
