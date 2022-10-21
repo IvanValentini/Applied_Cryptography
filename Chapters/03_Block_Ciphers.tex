@@ -1,0 +1,41 @@
+\chapter{Block Ciphers}
+
+\section{The problem of stream ciphers}
+
+The problem is generating a key as long as the plaintext.
+
+We encrypt block of bits, typically 64 bits. We do not see the plaintext as a stream of bits, but as collection of blocks. If the plaintext is not divisible by the block size we add padding.
+
+Every block is encrypted in isolation.
+
+We need a 1-to-1 function to map bits to their respective representation. But this table is too huge, so use a key that selects a subset of these 1-to-1 mapping functions, but this selection has to be done in a uniform way.
+
+How do we define these 1-to-1 functions (aka permutations functions).
+
+Take the notion of unicity distance: is minimum ciphertext (of minimum length) that is required by the attack to decrypt the ciphertext uniquely.
+Let WNAIW, is it possible to guess a unique plaintext that when a 1-to-1 function is applied to this plaintext we get the ciphertext? No... RIVER and WATER are valid options, but there are many more that are unreasonable ones (in this case we used a substitution cipher).
+
+We need to take into consideration that the distribution of letters is not uniform. It is redundant, "qu" is more common than "ql", so the redundancy of English has been evaluated to 3.2 bits per character.
+
+
+We want the unicity distance as large as possible.
+
+The observation: the same block with the same key produces always the same output ciphertext. And this is the problem with ECB encryption. The attacker could create a table for each plaintext-ciphertext combination, but we can defend against this by changing key often, and increasing the lenght of the length of the key to have larger unicity distance. In AES the key size must be at least 128 bits.
+Another thing we can do is have larger blocks so the attacker need larger tables.
+
+
+Diffusion (1 bit change in plaintext completly changes the ciphertext, avalanche effect) and confusion.
+
+
+P-Box: Permutation of all bits. Takes the output of S boxes of one round and permutes the bits and feeds them to the next S box. Substitution are happening locally to a subset of the plaintext.
+
+How we define the numbers in the table? In DES it was a secret, and NSA released some details some time ago, but nobody knows all the detail and how those numbers were chosen.
+
+Main advantage of DES is that the same hardware can be used for encryption and decryption. For decryption it is just needed to use the key in the reverse order.
+The number of rounds is 16 times.
+
+\section{Feistel function}
+
+First expansion permutation. Because RE is 32 bits and the key is 48 bits, so we need to make RE larger. The key is derived by the key scheduling algorithm.
+
+

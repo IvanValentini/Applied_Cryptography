@@ -209,5 +209,35 @@ Bluetooth is a wireless technology standard invented by Ericsson in 1994 for exc
 The standard offers methods for generating keys, authenticating users, and encrypting data.
 
 
+Stream ciphers transform the problem to generating a long stream of bytes that looks like random but it reproducible with a given seed. The strength of stream ciphers comes from how good it can approximate randomness. We used LSFR because they are really cheap and it is easy to implement the shift and generate long streams of seemingly random data. The important property is that they should generate the longest possible sequence before repeating them selves, and that is $2^n$. We exploit the connection with Galois field. The coefficients of the polynomial correspond with the taps of the LFSR. LFSR are easy to invert so we need to do something better.
 
+\section{RC4}
 
+Invented by Rivest, the inventor of RSA! It was secret, but then someone reverse engineered it. Used a lot, operates on bytes, it is simple and fast.
+
+The basic data structure needed is an array of 256 bytes, called the state vector $S$ containing values from 0 to 255 in an increasing order. Then you start scrambling these bytes by using a key $T$. The key if shorter is repeated.
+
+But why use $j = (j + S[i] + T[i]) mod 256$? Because it works in practice. It is also easy to compute.
+The way you pick indexes is biased.
+
+RC4 in WEP. But is vulnerable!
+Now we use WPA2, is not perfect, it used AES.
+
+We need to derive a session key starting from a pre shared key. So that the session key is unique between devices.
+
+TKIP implements a key mixing function that combines the pre shared key with....
+
+We avoid using a key using more than once. 
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{Images/Chapter2/screenshot014}
+	\caption{}
+	\label{fig:chapter2_screenshot014}
+\end{figure}
+
+Security of WPA2.
+
+Vulnerable to KRACK attack. It exploits a functionality where if a user is disconnected from wifi then for reconnecting it performs an easier problem to derive a new session.
+
+We should use different ciphers for different context. 
