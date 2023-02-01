@@ -137,7 +137,7 @@ Consider now the multiplication modulo some number $N$. It is interesting to con
 
 It is not difficult to see that there are other elements that can generate cycles containing all $12$ elements of the group, namely $6$, $7$, and $11$. Elements whose order is equal to the order of the group are called generators.
 Multiplication modulo a prime number forms a group with similar properties to those discussed considering multiplication modulo 13. The order of an element is always a divisor of the group order by Lagrange's theorem. Because some elements are generators of the group itself, it is called a cyclic group. The number of generators of the "group multiplication modulo a prime number" $p$ having the full order $p - 1$, is $\varphi(p-1)$ where $\varphi(\cdot)$ is Euler's totient function, namely:
-$$\varphi(n) = n \prod_{p|n}^{} (1- \frac{1}{p})$$
+\[\varphi(n) = n \prod_{p|n}^{} (1- \frac{1}{p})\]
 
 It counts the positive integers up to a given integer $n$ that are relatively prime to $n$. For $p=13$ in the previous example, we have that $\varphi(12) = 12 * \frac{1}{2} * \frac{2}{3} = 4$ which corresponds to what we have observed, i.e. that the 4 elements 2, 6, 7, and 11 are generators.
 
@@ -194,7 +194,7 @@ Given a maximum-length LFSR of n bits and reading $2^n - 1$ consecutive bits of 
 \end{itemize}
 
 As an example consider using as feedback polynomial the primitive polynomial $x^5 + x^2 + 1$, hence the period is $2^5 - 1 = 31$ bits and we expect $2^{5-1} = 16$ runs. Starting from the state (10000), the obtained m-sequence is:
-$$0000-1-00-1-0-11-00-11111-000-11-0-111-0-1-0-1$$
+\[0000-1-00-1-0-11-00-11111-000-11-0-111-0-1-0-1\]
 
 There are indeed 16 runs and 8 runs have length 1, 4 runs have length 2 , 2 runs have length 3, there is only 1 run of 4 zeros and none of 4 ones and there is only 1 run of 5 ones and none of 5 zeros.
 

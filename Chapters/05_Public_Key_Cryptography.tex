@@ -1,0 +1,530 @@
+\chapter{Public Key Cryptography}
+
+\section{Introduction}
+Use a pair of keys: public and private. Deriving a private key from a public key would require to solve a computationally difficult mathematical problem. 
+
+One way trapdoor function are function that easy to compute whereas their inverse function is difficult to compute if a secret $t$ is not known but becomes easy to invert when the secret t is available. As an example:
+\begin{itemize}
+	\item Multiplication vs. factorization: given prime numbers, say 3 and 7, it is easy to calculate the product. Given number 21 that is a product of two primes, it is not easy to determine the prime factors. Problem becomes much harder if we start with primes that have, say, 400 digits or so, because the product will have ~800 digits.
+	\item Exponentiation vs. logarithms: take the number 3 to the 6th power; it is relatively easy to calculate $3^6$ = 729. Start with number 729; it is difficult to determine the two integers, $x$ and $y$ s.t. $log_x 729 = y$. 
+\end{itemize}
+
+It is unknown if one-way trapdoor functions exist, we believe that certain are indeed so.
+
+
+Kerckhoffs principle: do not rely on the secrecy of algorithms; the key should be the only secret that needs protection. The security of Public Key Cryptography boils down to the protection of the private key.
+
+All parties interested in secure communications publish their public keys. SSL/TLS uses X.509 certificates that are exchanged between clients and servers during handshakes. This side-steps the problem of key distribution that plagued symmetric key cryptography. 
+
+The communication between entities with PKC is made to be confidential \ref{fig:confidentiality} and authentic  \ref{fig:authenticity}: Party $\mathcal{A}$ can encrypt a message using $\mathcal{B}$ publicly available key. Such a message would only be decipherable by $\mathcal{B}$ under the assumption that only $\mathcal{B}$ have access to the corresponding private key.  Party $\mathcal{A}$ can encrypt the message with $\mathcal{A}$ own private key. Since this message would only be decipherable with A public key, that would establish the authenticity of the message, i.e. $\mathcal{A}$ is indeed the source of the message. It is possible to combine the two techniques and provide both confidentiality and authenticity for any message exchanged between $\mathcal{A}$ and $\mathcal{B}$.
+
+PKC has proved indispensable for key management, for distributing the keys needed for the more traditional symmetric key cryptography, for digital signature applications, symmetric-key systems continue to be widely used for content encryption because of the greater computational cost associated with PKC. To preserve both at the same time:
+\begin{itemize}
+	\item On the sender side, party $\mathcal{A}$: $\mathcal{C}_1=enc(\mathcal{KA}_{pr},\mathcal{M})$, encrypt with its private key plaintext so to enable the check of authenticity and $\mathcal{C}_2=enc(\mathcal{KB}_{pu},\mathcal{C}_1)$ encrypt with public key of receiver so to enable the check for confidentiality.
+	\item On the receiver side, party $\mathcal{B}$: $\mathcal{M}\prime = dec(\mathcal{KB}_{pr}, \mathcal{C}_2)$ decrypt with its private key so to check for confidentiality: notice that $\mathcal{M'} =\mathcal{C}_1$ and $\mathcal{M''} = dec(\mathcal{KA}_{pu},\mathcal{M'})$ decrypt with sender public key to check for authenticity: notice that $\mathcal{M''} =\mathcal{M}$
+\end{itemize}
+The price to pay for achieving both confidentiality and authentication is that a message must be processed 4 times per exchange, 2 on the sender side and 2 in the receiver side. This comes at the price of the public-key algorithm.
+PKC does not make obsolete symmetric-key cryptography because of the greater computational cost associated with PKC, symmetric-key systems continue to be widely used for content encryption.
+PKC has proved indispensable for key management, for distributing the keys needed for the more traditional symmetric key cryptography, for digital signature applications
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{Images/Chapter5/confidentiality}
+	\caption{Confidentiality}
+	\label{fig:confidentiality}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{Images/Chapter5/authenticity}
+	\caption{Authenticity. Note: in reality, it is not the whole message to be encrypted but rather a digest produced by a hash function}
+	\label{fig:authenticity}
+\end{figure}
+
+\subsection{Forward secrecy}
+
+If someone steals the server private key, then all past and future communications are compromised with all clients. This is so because if attackers have recorded past encrypted messages, then all past and future symmetric keys can be decrypted. (Perfect) forward secrecy gives assurances that symmetric keys will not be compromised even if private keys are compromised.  
+
+To obtain forward secrecy there are two ways:
+\begin{itemize}
+	\item A temporary private key is generated for each session. Every session has a different set of keys. It is impossible to decrypt past traffic without having complete access to the server at the time-zero.
+	\item Use ephemeral key exchange. It requires generating a new public/private key pair per session. It is impossible to decrypt past communications even if the private key of the involved parties is compromised later
+\end{itemize}
+
+\section{RSA: Rivest, Shamir, Adleman}
+
+The RSA method was published in scientific paper in 1977. An RSA user creates and publishes a public key based on two large prime numbers. The prime numbers are kept secret. Messages can be encrypted by anyone, via the public key, but can only be decoded by someone who knows the prime numbers. The security of RSA relies on the practical difficulty of factoring the product of two large prime numbers, the factoring problem. There are no published method to defeat the system if large enough key is used.
+
+\subsection{RSA main idea}
+
+Euler Theorem for every positive integer $n$ and every $a$ that is coprime to $n$, the following must be true: \[a^{\phi(n)} \equiv 1 \bmod n\] where $\phi(n)$ is the totient of $n$. Note that $a^{\phi(n)} \equiv 1 \bmod n$ simply means that $a^{\phi(n)} = 1 + kn$ for some integer $k$. 
+
+Notice that Euler's totient function  $\phi(n)$ counts the positive integers up to a given integer $n$ that are relatively prime to or, equivalently, coprime with $n$. It is possible to use Euler theorem to greatly simplify the computations required to compute large powers modulo $n$. For example consider computing $7^{222} \bmod 10$. $7^{222}$ is huge, so instead observe that $7$ and $10$ are coprime and that $\phi(10) = 4$. Because of Euler theorem we have that $7^4 \equiv 1 \bmod 10$, thus we can derive: $7^{222} \equiv (7^4)^{55} * 7^2 \equiv 1^{55} * 7^2 \equiv 49 \equiv 9 \bmod 10$.
+More generally it can be shown that \emph{if} $x \equiv y \bmod(\phi(n))$,\emph{then} $  a^x \equiv a^y \bmod n$.
+
+Let $\mathcal{M}$ be is an integer that represents a message. Pick two integers $e$ and $d$ such that $ed \equiv 1 \bmod \phi(n)$. Assume that $\mathcal{M}$ is coprime with the modulus $n$. Then we have $M^{ed} \equiv M^{ed \bmod \phi(n)} \equiv M  \bmod n$.  The assumption that $\mathcal{M}$ and the modulus $n$ are coprime can be weakened by requiring that the modulus $n$ is the product of two primes. In fact, under this hypothesis, the last congruence relation above holds for any value of the message $\mathcal{M}$ between 0 and $n-1$ (both included).
+
+\subsection{Core algorithm}
+
+Preconditions are:
+\begin{itemize}
+	\item $n$ a modulus for modular arithmetic
+	\item $\phi(n)$ the totient of n
+	\item $e$ an integer that is coprime with $\phi(n)$. The coprime requirement guarantees the
+	existence of the multiplicative inverse modulo $\phi(n)$.
+	\item $d$ an integer that is the multiplicative inverse of $e$ modulo $\phi(n)$
+\end{itemize}
+
+Encryption: as an input a plaintext message $\mathcal{M}$ encoded as an integer between 0 and $n-1$ (included), and as output $\mathcal{C} = \mathcal{M}^e \bmod n$. 
+
+Decryption: as an input a ciphertext $\mathcal{C}$ obtained as explained above, and as output a plaintext $\mathcal{M} = \mathcal{C}^d \bmod n$.
+
+Observe that $\mathcal{C}^d \bmod n = (\mathcal{M}^e \bmod n)^d \bmod n = \mathcal{M}^{ed \bmod \phi(n)} \bmod n = \mathcal{M} \bmod n = \mathcal{M}$.
+
+\subsection{RSA for confidentiality}
+
+An entity $\mathcal{A}$ who wishes to receive messages confidentially will use:
+\begin{itemize}
+	\item the pair of integers $\{e, n\}$ as its public key
+	\item the pair of integers $\{d, n\}$ as the private key
+	\item The parameters $n$, $e$, and $d$ are as introduced above
+\end{itemize}
+
+Another entity $\mathcal{B}$ wishing to send a message $\mathcal{M}$ to $\mathcal{A}$ confidentially will encrypt $\mathcal{M}$ using $\mathcal{A}$’s public key $\{e, n\}$ to create the ciphertext $\mathcal{C}$. Only $\mathcal{A}$ will be able to decrypt $\mathcal{C}$ using its private key $\{d, n\}$.  If the plaintext message $\mathcal{M}$ is too long, $\mathcal{B}$ may choose to use RSA as a block cipher for encrypting the message meant for $\mathcal{A}$. When RSA is used as a block cipher, the block size is likely to be half the number of bits required to represent the modulus $n$. In practice, because of its high computational overhead, RSA is more likely to be used just for server authentication and for exchanging a secret session key.  Subsequently, a session key generated with the help of RSA-based encryption can be used for content encryption using symmetric-key cryptography.
+
+Now we will ask ourselves: how should we choose the modulus $n$ for the RSA algorithm to be considered secure?
+
+\subsection{Parameters selection}
+
+Recall that $\mathcal{M}^{ed} \equiv \mathcal{M}^{ed \bmod \phi(n)} \equiv \mathcal{M} \bmod n$ under the assumption that $\mathcal{M}$ is coprime with the modulus $n$. It was shown by Rivest, Shamir, and Adleman that the same property holds for all $\mathcal{M}$ if the modulus $n$ is a product of two prime numbers, i.e.  $n = 7 * 3$ for some prime $p$ and prime $q$. It is crucial for $p$ and $q$ to be large so also $n$ is so, and the problem of factorizing $n$ becomes harder even with one of the modern integer factorization algorithms.
+
+\subsection{Key generation}
+\begin{itemize}
+	\item Generate two distinct primes $p$ and $q$
+	\item Calculate the modulus $n = p q$
+	\item Calculate the totient $\phi(n) = (p - 1) (q - 1)$
+	\item Select for public exponent an integer $e$ such that $1 < e < \phi(n)$ and $gcd(\phi(n), e) = 1$
+	\item Calculate for the private exponent a value $d$ such that $d = e^{-1} \bmod \phi(n)$
+	\item Set public key to $\{e, n\}$
+	\item Set private key to $\{d, n\}$
+\end{itemize}
+
+But how do we generate primes? We need to generate sequences of numbers that look random. To be considered random, it must exhibit two properties: all the numbers in a designated range must occur equally often (uniform distribution) , and even if one knows some or all the numbers up to a certain point in a random sequence, he/she should not be able to predict the next one (or any of the future ones) (independence). 
+Truly random numbers can only be generated by physical phenomena, computer offer only an approximation by generating them with specific algorithms.
+
+Linear congruent generators are used: $X_{n+1} = (a * X_n + c) \bmod m$ where $X_0$ is the seed. Under suitable conditions, it is possible to obtain sequences that starts repeating after $m$ randomly generated numbers.
+
+But this is not cryptographically secure since it is possible to recover the values of $a$, $c$, and $m$ by solving 3 congruences:
+\begin{itemize}
+	\item $X_1 = (a * X_0 + c) \bmod m$
+	\item $X_2 = (a * X_1 + c) \bmod m$
+	\item $X_2 = (a * X_2 + c) \bmod m$
+\end{itemize}
+
+As a consequence, even when a PRNG produces a random looking sequence, it may not be secure enough for cryptographic applications.  A pseudorandom sequence produced by a PRNG can be made more cryptographic secure by restarting the sequence with a different seed after every $N$ numbers.
+
+Also Linear Feedback Shift Registers could be used but it is possible to perform attacks based on Linear Algebra, so it's better to combine them with non-linear components.
+
+
+\subsection{Primality Testing}
+Primality testing is much easier than factoring. Indeed, to check primality there is no need to factor the number under consideration.  There are two types of primality testing algorithms: deterministic tests determine with absolute certainty whether a number is prime, probabilistic tests can potentially (although with very small probability) falsely identify a composite number as prime (although not vice versa). In general probabilistic tests are much faster than deterministic tests. Numbers that have passed a probabilistic prime test are therefore properly referred to as probable primes until their primality can be demonstrated deterministically.
+
+Recall Fermat’s Little Theorem: if $p$ is prime, then for any integer $a$ that is coprime with $p$, we have $a^{p-1} \equiv 1 \bmod p$, or equivalently,  if $p$ is prime then for any integer $a$ that is coprime with $p$, we have that $a^{p-1} - 1$ is divisible by $p$.  It is possible to use this result to design a probabilistic algorithm for primality testing. Let $n$ be the integer that we would like to check for primality. Randomly select an integer $a$, if $a^{n-1} \bmod n$ does not yield 1, then $n$ is not a prime; otherwise, you cannot be certain, this is the idea underlying what is known as the Miller-Rabin algorithm for primality testing. With $t$ probes the probability of erroneous classification is significantly less than $4^{-t}$ provided that certain implementation best practices are adopted.
+
+\subsection{Generating primes}
+Preliminarily, set the size of the modulus $n$. Assume a modulus represented by a bitvector of $B$ bits typically $B=\{1024,2048,3072,4096,\ldots\}$. To generate prime $p$ use a high-quality pseudo-random number generator, generate a random number of size $B/2$. Then set the lowest bit of the integer generated, this ensures the number generated is odd, and set the two highest bits so we are sure the number is large, and finally check if the resulting integer is prime (e.g., by using the Miller-Rabin test), if not, increment the integer by 2 and check again. Generate the prime $q$ in a similar way, finally check that the two generated integers are distinct.
+
+\subsection{Public exponent selection}
+
+Recall that the public exponent should be an integer $e$ such that $1 < e < \phi(n)$ and $gcd(\phi(n), e) = 1$, recall also that $\phi(n) = \phi(p q) = \phi(p) \phi(q) = (p - 1) (q - 1)$. So from the $gcd(\phi(n),e) = 1$ we derive that: $gcd(p - 1, e) = 1$ and $gcd(q - 1, e) = 1$. To simplify computations, one typically chooses $e$ that is prime, has as few bits as possible equal to 1 for fast multiplications, and is cryptographically secure. Typically $e=\{3,5,17,65537 (=2^{16} + 1)\}$. 
+Clever algorithms are used to do fast modular exponentiation.
+
+\subsection{An algorithm for modular exponentiation}
+
+We still need to devise a procedure to compute $A^B \bmod n$ as these can grow pretty rapidly. Calculations can be sped up by realizing that $B$  can be expressed as a sum of smaller parts, then the result is a product of smaller exponentiations. \footnote{TODO: Slide 53..56 6-PKC\_RSA-2p.pdf}
+
+\begin{lstlisting}[language=python]
+	result = 1
+	while (B>0):
+		if (B & 1):
+			result = (result * A) % n
+		B = B >> 1
+		A = (A * A) % n
+	return result
+\end{lstlisting}
+
+
+\subsection{On being cryptographically secure}
+Small values for $e$, such as 3, are considered cryptographically insecure. To understand why, consider $\mathcal{A}$ sends the same message $\mathcal{M}$ to three different receivers using their respective public keys that have the same $e = 3$ but different values of $n$, say $n_1, n_2, n_3$ respectively. Assume that an attacker can intercept all transmissions so that it can collect the following 3 ciphertexts: 
+\[\mathcal{C}_1 = \mathcal{M}^e \bmod n_1, \mathcal{C}_2 = \mathcal{M}^e \bmod n_2, \mathcal{C}_3 = \mathcal{M}^e \bmod n_3\]
+
+Assuming that $n_1, n_2, n_3$ are relatively prime on a pairwise basis, the attacker can
+use the Chinese Remainder Theorem to compute $\mathcal{M}^3 \bmod (n_1 * n_2 * n_3)$. The attacker then can compute $\mathcal{M}$ from $\mathcal{M}^3$ which is not a computationally complex task.
+
+\subsection{Chinese remainder theorem}
+
+It states that in modulo M arithmetic, if M can be expressed as a product of $n$ integers that are pairwise coprime, then every integer in the set $\{0, 1, 2 , \ldots, M - 1\}$. can be reconstructed from residues with respect to those $n$ numbers. \footnote{TODO: Slide 60..63 6-PKC\_RSA-2p.pdf}
+
+\subsection{Private exponent selection}
+
+Recall that we need to find a value $d$ of the private exponent such that: \[e d \equiv 1 \bmod \phi(n)\] This means to compute the modular inversion of the public exponent $e$: \[d = e^{-1} \bmod \phi(n)\] Since $d$ is the multiplicative inverse of $e$ modulo $\phi(n)$, we can use the Extended Euclid Algorithm for calculating $d$, recall that $\phi(n) = (p - 1) (q - 1)$. The main source of security in RSA is keeping both $p$ and $q$ secret and thus also keeping $\phi(n)$ secret.
+
+
+\subsection{Euclid's algorithm for GCD}
+
+It's based on the following properties:
+\begin{itemize}
+	\item $gcd(a,a) = a$
+	\item If $b$ divides $a$, then $gcd(a,b) = b$
+	\item $gcd(a,0) = a$, this is so because it is always the case that a divides 0.
+\end{itemize}
+The recursive step of the algorithm is: $gcd(a,b) = gcd(b, a \bmod b)$.
+
+\subsection{Finding multiplicative inverses}
+
+The multiplicative inverse of $a$ with respect to $n$ (with $a<n$) is the integer $b<n$ such that $a * b \equiv 1 \bmod n$.  The multiplicative inverse exists for each integer $a<n$ such that $a$ and $n$ are coprime, i.e. $gcd (a,n) = 1$. Notice that if $n$ is a prime, then it is always possible to find a multiplicative inverse for any non-zero integer $a<n$.
+
+Bezout identity: $gcd(a,b) = x*a + y*b$ for  integers x and y (positive or negative). This identity allows us to find multiplicative inverses.
+By Bezout identity we derive that there exists $x$ and $y$ such that $x*a + y*n = 1$, if we take the equality $\bmod n$ we have: $x*a \bmod n + y*n \bmod n = 1 \bmod n$, that simplifies to $x * a \bmod n = 1$.
+
+We can sue Euclid's algorithm with some modifications:
+\begin{itemize}
+	\item at each step, write the expression of the remainder in the form $a*x + n*y$.
+	\item when the remainder becomes $1$ (which will happen only when $a$ and $n$ are relatively prime, $x$ will automatically be the multiplicative inverse of $a$ w.r.t. $n$.
+\end{itemize}
+
+TODO \footnote{TODO: Slide 71 6-PKC\_RSA-2p.pdf}
+
+\section{Security of RSA}
+
+As an example if a very short message is sent and $e$ is set to 3, $\mathcal{C} = \mathcal{M}^3 \bmod n$ will be just equal to $\mathcal{M}^3$ so the attacker can recover $\mathcal{M}$ easily. To prevent this, padding is added to the plaintext message.
+
+\subsection{Chosen ciphertext attacks}
+
+Consider entity $A$ sends a ciphertext message $\mathcal{C} = \mathcal{M}^e \bmod n$. With $\{e,n\}$ being the public key of $B$, and $\{d,n\}$ being the private key of $B$. The Moore's attack consist of: Eve intercepts $\mathcal{C}$, it can guess the plaintext $\mathcal{M}$ without knowing the
+private key of $B$ as follows
+\begin{itemize}
+	\item Eve randomly chooses an integer $s$ with a multiplicative inverse $s^{-1}$ w.r.t. the modulus $n$
+	\item Eve constructs a new message $C' = s^e * C \bmod n$ and sends it to Bob
+	\item Bob decrypts the message $C'$
+	\item Bob sends back the signed ciphertext $M' = C'^{d} \bmod n = (s^e * C \bmod n)^d * C^d \bmod n = s * M \bmod n$ (because the attacker has somehow convinced B to do so)
+	\item Eve will be able to record the orginal message $M$ by multiplying $M'$ by $s^{-1}$: $M' * s^{-1} = (s * M \bmod n) * s^{-1} = M$
+\end{itemize}
+ \footnote{TODO : Slide 76..77 6-PKC\_RSA-2p.pdf}
+
+There was another attack called the Bleichenbacher attack in which the Eve has access to an oracle that tells if any ciphertext is conformant to the PKCS standard. Eve craft a sequence of ciphertexts to be sent to the oracle. It is possible to show that Eve gains information about the ciphertext by making the sequence of ciphertexts adapting (i.e. the next ciphertext is crafted according to the previous answers of the oracle).
+Eve crafts a sequence of randomly selected integers s to form a candidate
+sequence of ciphertexts $C' = s^e * C \bmod n$.
+Eve chooses the integers s one at a time, forms the ciphertext $C'$ and sends it to the oracle to find out if $C'$ is conformant to the PKCS1 standard or not, i.e. in particular if its first two bytes have the integer values of $0$ and $2$.  Each positive answer from the oracle allows the attacker to enlarge the size of $s$ and make an increasingly narrower estimate for the value of the plaintext integer $M$ that corresponds to the original $C$s.
+
+\footnote{TODO: Slide 80..83 6-PKC\_RSA-2p.pdf}.
+
+Two different types of chosen ciphertext attacks: CCA1 and CCA2. 
+\begin{itemize}
+	\item CCA1 (also called passive chosen ciphertext attack): The attacker can consult the decryption oracle an arbitrary number of times, but only until the attacker has acquired the ciphertext C through eavesdropping
+	\item CCA2 (also called adaptive chosen ciphertext attack): The attacker can continue to consult the oracle even after seeing the ciphertext C
+\end{itemize}
+
+Bleichenbacher attack is a CCA2. This implies that PKCS\#v1.5 is not CCA2 secure. RSA is made resistant to CCA2 when the padding bytes are set according to OAEP (Optimal Asymmetric Encryption Padding).
+
+\subsection{Low entropy on keys}
+
+The entropy of a random number generator is at its highest if all numbers are equally likely to be produced within the range of numbers that the output is designed for. If a generator can produce 512-bit random numbers with equal probability, its entropy is at its maximum and it equals 512 bits.  If the probabilities associated with the output random numbers are nonuniform, the entropy will be less than 512 bits.
+The greater the nonuniformity of the probability distribution, the smaller the entropy, and the entropy is zero for deterministic output.
+Consider the situation in which an attacker has identified a common factor $p$ of two moduli $n_1,n_2$ by using Euclid algorithm (with quadratic complexity in the number of bits representing the integers). This implies that $n$ is GCD of both $n_1,n_2$. We can easily recover $q_1,q_2$ by division. To compute the private key then $d_i = {e_i}^{-1} \bmod ( p - 1) (q_i - 1)$ with $i=1,2$.
+Turns out that finding a pair of RSA moduli with a common factor is quite commonly found in the wild. This implies that random number generators used in key generation should have high enough entropy so that every modulus is unique vis-a-vis the moduli used by any other communication device anywhere on earth.
+
+\subsection{Mathematical attacks}
+Various mathematical techniques have been developed for solving the integer factorization problem involving large numbers. There exists the Fermat's factorization method, sive based method, Pollard method,...
+
+
+\section{Pragmatics on keys}
+It is important that the modulus is shared in a way such that everybody can use it.
+
+RSA recommends that the two primes that compose the modulus should be roughly
+of equal length. So if one wants to use 1024-bit RSA encryption, then the modulus integer will have a 1024 bit presentation; this, in turn, implies that the two primes must be roughly 512 bits each.
+
+Doubling the size of the key, i.e. the size of the modulus, will, in general, increase the time required: for encryption by a factor of 4 and for decryption by a factor of 8. Operations involving the private key are less affected because the public key exponent $e$ does not have to change as the key size increases while the private key exponent $d$ changes in direct proportion to the size of the modulus. Key generation time increases by a factor of 16 when the size of the key is doubled (but this is relatively infrequent).
+
+For the public key, in addition to storing the encryption exponent and the modulus, the key may also include information such as: the time period of validity, the name of the algorithm used for key generation. Same goes for the private key. Typically, the formats require the keys to be stored using Base64 encoding so that they can be displayed using printable characters.
+
+An example public key in the SSH representation is:
+\begin{lstlisting}
+	ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDeBCk5iHdJ40Ojj7X9dzr8ZMx139Imx[...]ZfpmoetXK04jj3s5RriUK6VF5weIhWbiLOeXAv39Vo56e1lO8HfhpD6/tZEztaibADaVc= ivan@DESKTOP-L0NSSBD
+\end{lstlisting}
+
+
+An example private key is:
+\begin{lstlisting}
+	-----BEGIN OPENSSH PRIVATE KEY-----
+	b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+	NhAAAAAwEAAQAAAYEA3gQpOYh3SeNDo4+1/Xc6/GTMdd/SJsX1Rb/EhvPL4WjnQcXyBTXh
+	5wNf6RMuX6C8Tmx/Nmbe6TMRuxvcB5+GimTXpfE0BYwkRsxmTaDm1DaLomJsWqFg8tY2gt
+	[...]
+	sRL0AwR7I9/9FRJNlQH4gAs3rWUDqVG4YGg12pNVz4kBioPXhu9rCJiEF6KnJWxOtbBf+H
+	RG/orJ64KugdgtAAAAFGl2YW5AREVTS1RPUC1MME5TU0JEAQIDBAUG
+	-----END OPENSSH PRIVATE KEY-----
+\end{lstlisting}
+
+\subsection{Final remarks}
+Assuming we are using the best possible random number generator to create candidates for the primes needed to compute the modulus and a version of RSA resistant to chosen ciphertext attacks, all the security still lies in the difficulty of factoring large integers. So using keys larger than 1024 bits is highly advised. A comparison between RSA and other cryptographic primitive can be seen in table \ref{table:comparison_rsa}. The table tells us that the computational overhead of RSA encryption/decryption goes up as the size of the modulus increases. This makes RSA inappropriate for encryption/decryption of actual message content for high data-rate communication channel. RSA plays a key role for the exchange of secret keys that can subsequently be used for the more traditional (and much faster) symmetric-key encryption and decryption of the message content.
+
+
+\begin{table}[b]
+	\centering
+	\begin{tabular}{ |p{4cm}|p{4cm}|p{4cm}|  }
+		\hline
+		Symmetric Key Algorithm& Key size for symmetric key	cryptography &Comparable key size for RSA algorithm\\
+		\hline
+		2-Key DES & 112 & 1,024\\
+		3-Key DES & 168 & 2,048\\
+		AES-128 & 128 & 3,062\\
+		AES-192 & 192 & 7,680\\
+		AES-256 & 256 & 15,360\\
+		\hline			
+	\end{tabular}
+	\caption{Comparison between RSA and other cryptographic primitives.}
+	\label{table:comparison_rsa}
+\end{table}
+
+\subsection{Key exchange with public key cryptography}
+
+RSA, is one of the method used for key exchange based on public key cryptography in TLS. Public key cryptography is also used to bind a real world entity with a certificate.
+There is an hierarchy of certification authorities. There are some root CA, and a level below some other CAs that have a certificate signed by a root CA, and so on with every level.
+
+
+\subsection{RSA and lack of forward secrecy}
+(Perfect) Forward Secrecy is a property of key-exchange protocols in which the exposure of long-term keying material, used in the protocol to negotiate session keys, does not compromise the secrecy of session keys established before the exposure. 
+The key sharing protocol based on RSA does not provide forward secrecy. To see why, consider the situation in which an attacker records all encrypted messages between a client and a server.
+In this way, the attacker also records the messages that the client and the server exchange during the key exchange protocol: a client gets the server’s certificate to authenticate the server and to extract the server RSA public key for creating a secret session key. The client generates and then sends a shared key encrypted with the server’s public key.
+
+If the attacker can get its hands on the server’s private key it will immediately be able to decrypt all the messages that the client and the server has exchanged during a session because it is able to decrypt the message, encrypted with the server’s public key, containing the session key that has been generated by the client. Notice that the attacker can do this for any session whose messages it has recorded!
+To understand the likelihood of this attack, we need to understand how likely it is that a private is leaked unfortunately, it is likely and it has happened in the past because of insider attackers (e.g., disgruntled employees exfiltrating the private key of company servers). TLS heartbleed attack that was able to dump arbitrary memory portion of the server possibly including sensitive information such as its private key RSA is used in TLS to do authentication. But if for some reason the private key of the server is leaked we are in trouble since there is no forward secrecy.
+Intuitively, if the data exchanged are quite sensitive but such data is useful for a short time (i.e. they have a limited lifetime), then an attacker will be likely to decrypt the data only after the period in which they are useful. To avoid this problem, we need to come up with a method to share a session key that avoids to send the key over the channel!
+
+\section{Diffie-Hellman Key Exchange Algorithm}
+To solve this we need to use the Diffie-Hellman protocol!
+Given the following two public parameters (i.e. shared between the parties willing to agree on a shared session key): $p$ is prime, $g<p$ is a group generator.
+
+The Diffie-Hellman algorithm for key exchange between two parties A and B is: 
+\begin{enumerate}
+	\item $\mathcal{A} \rightarrow \mathcal{B}: g^a \bmod{p}$
+	\item $\mathcal{B} \rightarrow \mathcal{A}: g^b \bmod{p}$
+\end{enumerate}
+
+$\mathcal{A}$ can compute the (pre-)shared key with $\mathcal{B}$ as $(g^b \bmod{p})^a$ and $B$ can compute the (pre-)shared key with $\mathcal{A}$ as $(g^a \bmod{p})^b$.
+It turns out that $(g^b \bmod{p})^a = g^{ab} \bmod{p} = (g^a \bmod{p})^b$ \ref{fig:diffie-hellman-key-exchange}.
+Notice that the (pre-)shared key has been never sent over the channel! This is crucial for forward secrecy.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{Images/Chapter5/diffie-hellman}
+	\caption{Diffie-Hellman key exchange}
+	\label{fig:diffie-hellman-key-exchange}
+\end{figure}
+
+
+Every time $\mathcal{A}$ and $\mathcal{B}$ want to establish a communication channel, they have to generate a \textbf{new} private key, that has never been used before. This guarantees forward secrecy. This is known as ephemeral Diffie-Hellman key exchange.
+Extensions of the Diffie-Hellman key exchange support forward secrecy.
+
+\subsection{Digression on discrete logarithm problem}
+
+The security of RSA is based on the observation that while it is computationally efficient to perform multiplications of even large integers, it is infeasible or computationally very expensive to compute the prime factors of large integers. Note that a different way of attacking RSA is not known. In other words the security of RSA is not equivalent to the problem of factoring large integers.
+
+
+The security of Diffie-Hellman is based on the observation that while it is computationally efficient to calculate powers of large integers, it is infeasible or computationally very expensive to compute the discrete logarithm of large integers.
+
+For any positive integer $N$, the set of all integers $i < N$ that are coprime to $N$ form a group with modulo $N$ multiplication as the group operator. For example $N=8$, the set $\{1,2,5,7\}$ forms a group with modulo $8$ multiplication. When $N=p$ with $p$ a prime, the group is denoted with $\mathbb{Z^*}_p$ and consists of all the integers in the set $\{1, 2, \ldots, p-1\}$ that are coprime with $p$ since this is prime.
+For some N, the set of support of the group with modulo N multiplication contains an element whose various powers (computed modulo $N$) are all distinct and span the entire set of support. Such an element is called the primitive element, the primitive root modulo N, or the generator of the group with modulo $N$ multiplication. Primitive roots modulo $N$ can be used to define discrete logarithm.
+
+Recall that $x^y = z$ and $log_x z = y$. Similarly $x^y \equiv z \bmod N$ and $dlog_{x,N} z = y$. Observe that the unique discrete logarithm mod $N$ to some base a exists only if $a$ is a primitive root modulo $N$.
+
+$\mathbb{Z^*}_p$ is a cyclic group, i.e. each element can be expressed as $g^i \bmod p$ for some $i$ and $g$. For example $\mathbb{Z^*}_{17}$ is a cyclic group for $g=3$, this means if we compute $3^i \bmod 17$ for $i=0,1,\ldots$ it is possible to get all possible elements in the support set of $\mathbb{Z^*}_{17}$, i.e $\{1,2,\ldots,16\}$. A subset of the support set of $\mathbb{Z^*}_p$ is a cyclic subgroup if the group operator is multiplication modulo p and all the elements of the subgroup can be generated through the powers of one of the elements of the subgroup.
+
+For example $\{1, 2, 4, 8, 16, 15, 13, 9\}$ is a cyclic subgroup for $g=2$, it is easy to check this by computing $2^i \bmod 17$ for $i=0,1,\ldots$
+
+Lagrange’s theorem in Group Theory: If $M$ is the order of a cyclic subgroup of $\mathbb{Z^*}_p$, then M will be a divisor of $p-1$. In the previous example we have that $\{1, 2, 4, 8, 16, 15, 13, 9\}$ is a cyclic subgroup for $g=2$, the order of the  subgroup is the cardinality of the set of support, i.e. $M=8$. Indeed $M=8$ is a divisor of $p-1=17-1=16$.
+
+Property of a cyclic group of order $M$: $g^M \equiv 1 \bmod p$. For the example above $2^8 \equiv 1 \bmod 17$ since $2^8 \bmod 17  = 256 \bmod 17 = 1$.
+
+We are interested in those cyclic subgroups of $\mathbb{Z^*}_p$ whose order $M$ is large.  More precisely, we are interested in picking a generator $g$ such that the order $M$ of the induced cyclic subgroup is a large prime that is also a factor of $p-1$. The security of the Diffie-Hellman algorithm crucially depends on the size of the cyclic subgroup. In the Diffie-Hellman key exchange three parameters are made public: $(p,g,M)$, where $p$ is a prime, $g$ is the generator of a cyclic subgroup of $\mathbb{Z^*}_p$ and $M$ is the order of the cyclic subgroup generated by $g$. It is important that the choice of $p$ and $g$ yield a large value for $M$. A typical value of $g$ is $2$.
+
+\footnote{TODO: Slide 122..124 6-PKC\_RSA-2p.pdf}
+
+\subsection{Security of Diffie-Hellman}
+
+The crucial property of the Diffie-Hellman algorithm is that an attacker having access to the public keys of both $\mathcal{A}$ and $\mathcal{B}$ is still not be able to figure out the shared key. This is so also because parties $\mathcal{A}$ and $\mathcal{B}$ create a shared secret key without either party having to send it directly to the other (as it was the case with RSA). The Diffie-Hellman algorithm is also referred to as the ephemeral secret key agreement protocol because, typically, the shared secret key is used only once.
+
+
+Based on the fact that while it is relatively easy to compute the powers of an integer in a finite field, it is extremely hard to compute the discrete logarithms. This means that while it is possible to quickly compute $y = g^x \bmod p$ to determine the public key of an entity, for an attacker is computationally infeasible to figure out the private key $x$ of the entity from the knowledge the public parameters $p, g, M$ and the public key $y$, this is so because the attacker would need to perform the following discrete logarithm calculation $x = dlog_{g,p} y$ for which an efficient algorithm is not known.
+
+Recall that $g^s \equiv k \bmod p$ and $dlog_{g,p} = s$. If an attacker can solve $g^s \equiv k \bmod p$ with respect to $s$ for given values of $g$ and $k$, the security of the Diffie-Hellman algorithm is violated. An obvious way to solve this is by brute force enumeration, compute $g^i \bmod p$ for increasing values of $i$ until a solution is found. The computation complexity is proportional to $p$. If $p$ represented in binary requires n bits, then the complexity is proportional to $2^n$ and thus grows exponentially with the size of $p$ in bits.
+
+
+The most serious vulnerability of Diffie-Hellman is the man-in-the-middle attack. Assume an attacker $\mathcal{I}$ that can intercept all messages and decide to replay some of them in a possibly modified form.
+
+
+\begin{enumerate}
+	\item $\mathcal{A} \rightarrow \mathcal{I}: g^a \bmod{p}$
+	\item $\mathcal{I} \rightarrow \mathcal{B}: g^{i_a} \bmod{p}$
+	\item $\mathcal{B} \rightarrow \mathcal{I}: g^{b} \bmod{p}$
+	\item $\mathcal{I} \rightarrow \mathcal{A}: g^{i_b} \bmod{p}$
+\end{enumerate}
+
+Notice that the attacker is free to modify the content of the exchanged messages between $\mathcal{A}$ and $\mathcal{B}$ at will without being detected.
+$\mathcal{A}$ computes the shared key with whom it believes to be $\mathcal{B}$ but is $\mathcal{I}$ instead: $K_a = g^{a i_b} \bmod p$, $\mathcal{B}$ computes the shared key with whom it believes to be $\mathcal{A}$ but is $\mathcal{I}$ instead: $K_b = g^{b i_a} \bmod p$. $\mathcal{I}$ computes the same two shared keys: one with $\mathcal{A}$ and the other with $\mathcal{B}$. $\mathcal{I}$ can decrypt the messages from $\mathcal{A}$ using $K_a$ and re-encrypt them with $K_b$ before forwarding to $\mathcal{B}$ and vice versa from the messages received from $\mathcal{B}$ and it is able to read all the exchanged message!
+The problem is that Diffie-Hellman provides no authentication, so $\mathcal{A}$ can not be sure it is talking to $\mathcal{B}$ and vice versa. There is a variant of Diffie-Hellman that includes authentication called authenticated Diffie-Hellman, that consists of:
+\begin{itemize}
+	\item each party acquires a certificate for the other party
+	\item the public key that each party sends to the other party is digitally signed by the sender 	using the private key that corresponds to the public key on the sender’s certificate
+	\item this phase is usually performed by using RSA cryptography
+\end{itemize}
+
+Authenticated Diffie-Hellman tries to combine the best of both Diffie-Hellman and RSA cryptography: it supports forward secrecy and avoids men-in-the-middle-attacks.
+
+Prime selection with the desirable properties for use with the Diffie-Hellman algorithm as they must yield multiplicative subgroups of large order and satisfy several other properties is not always straight forward.
+
+\section{Elliptic curve cryptography (ECC)}
+
+Elliptic curve cryptography (ECC) can provide the same level and type of security as RSA (or Diffie-Hellman) with much shorter keys. The computational overhead of both RSA and ECC grows as $O(N^3)$. However, it takes far less computational overhead to use ECC on account of the fact that shorter keys in ECC provide the same level of security of much longer keys in RSA \ref{table:comparison_rsa_ecc}.
+
+\begin{table}[b]
+	\centering
+	\begin{tabular}{ |p{4cm}|p{4cm}|p{4cm}|  }
+		\hline
+		AES& RSA/Diffie-Hellman&ECC\\
+		\hline
+		80 & 1024 & 160\\
+		112 & 2048 & 224\\
+		128 & 3072 & 256\\
+		192 & 7680 & 384\\
+		256 & 15360 & 512\\
+		\hline			
+	\end{tabular}
+	\caption{Comparison between RSA and other cryptographic primitives.}
+	\label{table:comparison_rsa_ecc}
+\end{table}
+
+Other advantages deriving from shorter keys:
+\begin{itemize}
+	\item ECC algorithms can be implemented on smartcards without mathematical coprocessors
+	\item Contactless smart cards work preferably with ECC because other algorithms require too much induction energy
+	\item Since shorter key lengths translate into faster handshaking protocols, ECC is also becoming increasingly important for wireless communications and more recent technologies like wireless sensors networks
+\end{itemize}
+
+It is possible to support forward secrecy and authentication, by using ECDHE-RSA, where ECDHE is Elliptic Curve Diffie-Hellman Ephemeral. RSA is used for certificate based authentication. ECDHE is used for creating a one-time session key.
+
+RSA is used for authentication because a majority of the certificates in use today are based on RSA public keys. This is changing as more and more organizations use ECC based certificates. These new certificates use the ECDSA algorithm for authentication. When authentication is done by ECDSA and the session key generated with ECDH or ECDHE, the combined algorithm is denoted ECDHE-ECDSA or ECDH-ECDSA.
+
+
+\subsection{ECC: Main idea}
+ECC is based on a generalization of the idea of repeatedly applying the group operation and the difficulty of computing how many times this has been applied. The main difference is that ECC uses points in a two dimensional space rather than integers.
+
+Let $\mathcal{E}$ be a (finite) set of points on the plane and define a binary operation $+$ on the points of $\mathcal{E}$ that satisfies the properties of a group operator (i.e. closure, associativity, identity and invertibility). Given points $\mathcal{P}$ and $\mathcal{Q}$, $\mathcal{P}+\mathcal{Q} = \mathcal{R}$ in $\mathcal{E}$. We are interested in computing $\mathcal{G}+\mathcal{G}, \mathcal{G}+\mathcal{G}+\mathcal{G},\ldots$, i.e. $k$-times addition of $\mathcal{G}$, $k * \mathcal{G}$. The crucial property that the set $\mathcal{E}$ needs to satisfy to be useful for cryptography in a sense similar to the Diffie-Hellman is that after we have calculated $k * \mathcal{G}$ for a given point $\mathcal{G}$ in $\mathcal{E}$ it is extremely difficult to recover $k$ from $k * \mathcal{G}$, this is also called the discrete logarithm problem. We assume that the only way to recover $k$ from $k * \mathcal{G}$ is to try every possible summation of $\mathcal{G}$.
+
+Again we take a $\mathcal{G}$ point, and make it public. $\mathcal{A}$ chooses an integer $X_a$ as private key and computes $Y_a = X_a * G$ and shares it with $\mathcal{B}$ that will in turn choose an integer $X_b$, compute $Y_b = X_b * G$ and share it with $\mathcal{A}$. $Y_a, Y_b$ are the public keys. Finally $\mathcal{A}$ computes $K_a = X_a * Y_b$ and $K_b = X_b * Y_a$, it can be shown that $K_a = K_b$.
+All of the assumptions about the set $\mathcal{E}$ of points are satisfied when the points in $\mathcal{E}$ are taken from an elliptic curve.
+
+\subsection{Remarks}
+
+Before introducing elliptic curves, let us remark that if the security of ECC depends on finding out how many times a point $\mathcal{G}$ participates in a sum like $\mathcal{G} + \mathcal{G} + \ldots + \mathcal{G}$, why would it take an attacker any more work to figure that out than it would take for a party to calculate the sum? It would seem that all that the attacker would need to do would be to keep on adding $\mathcal{G}$ to itself until the attacker obtains the value of the sum. In other words, if some integer $X_a$ is the private key of $\mathcal{A}$ and if $\mathcal{A}$ derives its public key by adding the point $\mathcal{G}$ to itself $X_a$ times, the amount of computational effort $\mathcal{A}$ expends in adding $\mathcal{G}$ to itself $X_a$ times should be the same as what the attacker would need to expend if it kept on adding $\mathcal{G}$ to itself until reaching a value that is $\mathcal{A}$’s public key.
+To understand why it is not the case, the amount of computational effort that it takes to add a point $\mathcal{G}$ to itself $X_a$ number of times is logarithmic in the size of $X_a$.
+This is so because $\mathcal{A}$ can compute $\mathcal{G} + \mathcal{G} = 2*\mathcal{G}$, then adds $2*\mathcal{G}$ to itself and gets $4*\mathcal{G}$, and so on. However, the attacker would not know the value of $X_a$ and so it would not be able to take advantage of such exponentially increasing jumps. Additionally, in most commonly used ECCs, all the calculations are carried out modulo a prime $p$. Thus, as the attacker keeps on adding $\mathcal{G}$ to itself, the size of what it gets cannot serve as a guide to how many more times the attacker must repeat that addition to get to the final value.
+
+\subsection{Elliptic curves}
+Elliptic curves are called so because of their relationship to elliptic integrals. An elliptic integral can be used to determine the arc length of an ellipse. The Weierstrass equation of characteristic 0: $y^2 = x^3 + ax + b$. Notice that elliptic curves are symmetric on the $x$ axis \ref{fig:ellipticcurves}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{Images/chapter5/elliptic_curves}
+	\caption{}
+	\label{fig:ellipticcurves}
+\end{figure}
+
+\subsection{Features of elliptic curves}
+The points on an elliptic curve can be shown to constitute a group. A group operator; an identity element with respect to the operator; closure and associativity with respect to the operator; existence of inverses w.r.t. the operator.
+
+The group operator for the points on an elliptic curve is called addition although its definition has nothing to do with the conventional arithmetic addition \ref{fig:eccaddition}.
+
+The definition of two points $\mathcal{P}$ and $\mathcal{Q}$ is the following:
+\begin{itemize}
+	\item join $\mathcal{P}$ with $\mathcal{Q}$ with a straight line
+	\item call the third point $\mathcal{R}$ of the intersection of the straight line through $\mathcal{P}$ and $\mathcal{Q}$ with the curve, if such an intersection exists. If it does not exist we pick infinity by the special symbol $\mathcal{O}$ that will be defined as the additive identity element for the group operator. Note that by definition $\mathcal{P}+\mathcal{O} = \mathcal{P}$ and if $\mathcal{P}+\mathcal{Q}=\mathcal{O}$ then $\mathcal{Q} = -\mathcal{P}$
+	\item the mirror image of $\mathcal{R}$ with respect to the $x$-axis is the point $\mathcal{P} + \mathcal{Q}$.
+\end{itemize}
+
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.5\linewidth]{Images/Chapter5/ecc_addition}
+	\caption{}
+	\label{fig:eccaddition}
+\end{figure}
+
+We take a point $\mathcal{G}$ and add it to itself. To do it we take a second point $\mathcal{H}$, and move $\mathcal{H}$ closer and closer, in the limit the two overlap, and the line joining the two points will be tangent to the elliptic curve. So $\mathcal{G} + \mathcal{G}$ is defined as the tangent in that point, and then determine the intersection of the tangent with the curve, and then take the reflection of such intersection with respect to the $x$-axis.
+Take two points, then move $\mathcal{Q}$ closer and closer to $\mathcal{P}$. Take the generator point $\mathcal{G}$, take the tangent, and obtain another point on the curve, then reflect it, and calculate the tangent, and so on.
+
+It is possible to show that inverting the addition of points is difficult.
+
+$E(a,b)$ denotes the set of points belonging to the elliptic curve described by $y^2 = x^3 + ax + b$ extended with the point $\mathcal{O}$ at infinity.
+$E(a,b)$ can be shown to be closed under the operation of addition as defined above, that it has an inverse for every element, and the addition is associative. In other words, $E(a,b)$ is a group. \footnote{TODO: Slide 151..153 6-PKC\_RSA-2p.pdf}
+
+
+\section{Elliptic curves over finite fields}
+
+This kind of arithmetic computations cannot be used for cryptography because calculations with real numbers are prone to round-off error whereas cryptography requires error-free arithmetic.
+The solution to this problem is to restrict the values of the parameters $a$ and $b$, the value of the independent variable $x$, and the value of the dependent variable $y$ to some finite field $Z_p$ for $p$ a prime number.
+In other words, we consider elliptic curves that satisfy the following congruence: $y^2 \equiv x^3 + ax +b \bmod{p}$. Security depends on the selection of $a$ and $b$.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.3\linewidth]{Images/Chapter5/ecc_finite_fields}
+	\caption{EC over finite fields}
+	\label{fig:eccfinitefields}
+\end{figure}
+
+An elliptic curve over a finite filed looks like some points \ref{fig:eccfinitefields}, where each point belonging to the curve and has integer coordinates.
+
+Similarly to what we have done for elliptic curves over the reals, we denote by $E_p(a,b)$ the set of points that satisfy $y^2 \equiv x^3 + ax +b \bmod{p}$. Indeed $E_p(a,b)$ is no longer the set of real points belonging to a curve, but a collection of discrete points in the Cartesian product. Since the points in $E_p(a,b)$ no longer form a curve, we cannot use the geometrical construction to illustrate the action of the addition operator.
+Luckily, the algebraic expressions derived for these operations continue to hold good provided the calculations are carried out modulo $p$.
+
+It possible to count the number of points in an elliptic curve over a finite field by using Schoof's algorithm, knowing the number of points is very important for judging the difficulty of solving the discrete logarithm problem in the group of points of the elliptic curve. Hasse theorem provides an estimate of the number of points on an elliptic curve over a finite field, bounding the value both above and below.  The higher the points on an EC the better it is!
+Of particular interest, it is the definition of elliptic curves over Galois fields, i.e. over $GF(2^n)$. For these curves to be cryptographically secure, it is mandatory to take $n$ a prime. Recall that over Galois fields, addition is equivalent to bit-wise xor. This implies that $x+x=0$ that in turn implies that the field has characteristic $2$. This prevents the use of the class of elliptic curves described by the congruence $y^2 \equiv x^3 + ax +b \bmod{p}$ since they become singular and this is detrimental to security.
+
+The elliptic curve equation to use when the underlying field is described by $GF(2^n)$ is the following $y^2 + xy = x^3 + ax + b$. \footnote{TODO: Slide 161..163 6-PKC\_RSA-2p.pdf}
+
+
+
+\section{Elliptic Curve Cryptography}
+
+Just as RSA uses exponentiation, i.e. repeated multiplication, as its basic arithmetic operation, ECC uses the addition group operator as its basic arithmetic operation. Assume $\mathcal{G}$ is a point, chosen by a user, over an elliptic curve $E_q(a,b)$ where $q$ is a prime (finite field over a prime) or $q=2^n$ for $n$ a prime (Galois field). With an appropriate choice for $\mathcal{G}$, whereas it is relatively easy to calculate $\mathcal{C} = \mathcal{M} * \mathcal{G}$ for an integer $\mathcal{M}$ encoding a plaintext it is infeasable to derive $\mathcal{M}$ from $\mathcal{C}$ in the case of knowing $\mathcal{G}$ and $E_q(a,b)$. Deriving it is called the discrete logarithm problem. An attacker could try to recover $\mathcal{M}$ from $\mathcal{C} = \mathcal{M} * \mathcal{G}$ by calculating $2*\mathcal{G}, 3*\mathcal{G}, 4*\mathcal{G}, \ldots , k*\mathcal{G}$ with increasing values of $k$. In the worst case, the process will span all points in the elliptic curve $E_q(a,b)$ and requires to check whether or not the result is equal to $\mathcal{C}$. If $q$ is sufficiently large and the point $\mathcal{G}$ on the curve $E_q (a,b)$ is chosen carefully, this would take too long in practice and it can thus be considered as infeasible.
+
+
+\section{ECDH: Elliptic Curve Diffie-Hellman}
+The goal is to establish a secret session key between two parties. A community of users wishing to engage in secure communications with ECC chooses the parameters $q$, $a$, and $b$ for an elliptic curve $E_q(a,b)$ together with a base point $\mathcal{G}$ on the curve. Recall that $q$ can either be a prime or a power of $2$.
+
+\begin{itemize}
+	\item $\mathcal{A}$ selects an integer $\mathcal{X}_a$ as its private key and compute $\mathcal{Y}_a = \mathcal{X}_a * \mathcal{G}$ as its public key. 
+	\item $\mathcal{B}$ selects an integer $\mathcal{X}_b$ as its private key and compute $\mathcal{Y}_b = \mathcal{X}_b * \mathcal{G}$ as its public key. 
+	\item $\mathcal{A}$ and $\mathcal{B}$ exchange their public keys
+	\item $\mathcal{A}$ computes $\mathcal{K}_a = \mathcal{X}_a * \mathcal{Y}_b$ and $\mathcal{B}$ computes $\mathcal{K}_b = \mathcal{X}_b * \mathcal{Y}_a$. 
+\end{itemize}
+
+Turns out that $\mathcal{K}_a = \mathcal{K}_b$.
+
+\section{ECDSA: EC digital signature algorithm}
+
+Consider a finite fields $Z_p$ over a large prime $p$... \footnote{TODO: Slide 169..170 6-PKC\_RSA-2p.pdf}
+
+\section{Security of ECC}
+
+Certain classes of curves are weak (singular, super-singular curve). It is possible to reduce the problem of knowing how many times to add the generator to itself to computing the discrete logarithm in a finite field. To avoid this attack the elliptic curve has to satisfy the MOV condition.
+
+When using Galois fields $GF(2^n)$ another security consideration relates to what is known as the Weil descent attack. To avoid this attack $n$ has to be prime.
+
+Elliptic curves for which the total number of points on the curve equals the number of elements in the underlying finite field are also considered cryptographically weak.
+
+There are standards that help choosing safe to use elliptic curves. \footnote{TODO: Slide 172..174 6-PKC\_RSA-2p.pdf}
+

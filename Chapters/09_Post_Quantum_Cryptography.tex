@@ -1,0 +1,41 @@
+\chapter{Post Quantum Cryptography}
+
+Quantum computing is the use of quantum phenomena such as superposition and entanglement to perform computation. [...] Quantum computers are believed to be able to solve certain computational problems, such as integer factorization (which underlies RSA encryption), substantially faster than classical computers.
+Superposition refers to a combination of states we would ordinarily describe independently.
+To make a classical analogy, if you play two musical notes at once, what you will hear is a superposition of the two notes.
+Entanglement is a famously counter-intuitive quantum phenomenon describing behaviour we never see in the classical world. Entangled particles behave together as a system in ways that cannot be explained using classical logic.
+Quantum computing is based on the fact that tiny particles, such as electrons, can simultaneously take on states that we would normally deem mutually exclusive. We never see this superposition of different states in ordinary life because it somehow disappears once a system is observed: when
+you measure the location of an electron, all but one of the possible alternatives are eliminated and you will see just one.
+There is more to quantum physics than just superposition. If you look at a system of more than one qubit, then the individual components are not generally independent of each other; instead, they can be entangled. When you measure one of the qubits in an entangled system of two qubits, for example, then the outcome — whether you see a 0 or a 1 - immediately tells you what you will see when you measure the other qubit. Particles can be entangled even if they are separated in space, a fact that caused Einstein to call entanglement "spooky action at a distance".
+
+A quantum computer works with particles, representing quantum bits (qubits), that can be in superposition. I.e. qubits can take on the value 0, or 1, or both simultaneously. Entanglement implies that a quantum computer cannot be described using classical information theory since its states are not simply the result of stringing together the descriptions of the individual qubits but you need to describe all the correlations between the different qubits. As you increase the number of qubits, the number of those correlations grows exponentially: for n qubits there are 2n correlations. While a quantum algorithm can take entangled qubits in superposition as input, the output will also usually be a quantum state —and such a state will generally change as soon as you try to observe it. The art of quantum computing is to find ways of gaining as much information as possible from the unobservable.
+
+Noise is the central obstacle to building large-scale quantum computers.  Quantum decoherence happens when qubits lose information to the environment over time. In other words, there is a certain threshold for noise (called fault tolerance) where quantum computers will theoretically be reliable enough to be considered useful.
+
+The more qubits the more powerful it becomes, but also there is more noise. The idea is to use machine learning algorithms that are capable of correcting errors by learning.
+
+Qubits carry huge amount of information until they are observed. Unfortunately, to learn the result of computation one has to measure and this collapses qubits to basis state, i.e. 1 qubit leads 1 classical bit of information. The game is to increase the number of qubits while allowing for extracting useful information from quantum states.
+
+Quantum supremacy is the goal of demonstrating that a programmable quantum device can solve a problem that no classical computer can solve in any feasible amount of time (irrespective of the usefulness of the problem).
+
+\section{Relevance to cryptography}
+
+Shor Algorithm: polynomial-time quantum computer algorithm for integer factorization. Problem: Given an integer $N$, find its prime factors. Complexity: polynomial in $log(N)$. Exponentially faster than the most efficient known classical factoring algorithm, the general number field sieve method.
+If a quantum computer with a sufficient number of qubits could operate without succumbing to quantum noise and other quantum-decoherence phenomena, then Shor's algorithm could be used to break public-key cryptography schemes, such as the widely used RSA scheme. Shor's algorithm shows that factoring integers is efficient on an ideal quantum computer, so it may be feasible to defeat RSA by constructing a large quantum computer.
+
+Grover algorithm is a quantum computer algorithm that finds with high probability the unique input to a black box function that produces a particular output value, using just $O(\sqrt{N})$ evaluations of the function where $N$ is the size of the function domain. Unlike Shor algorithms, which provides an exponential speedup, Grover's algorithm provides only a quadratic speedup. Grover's algorithm could brute-force a 128-bit symmetric cryptographic key in roughly $2^{64}$ iterations, or a 256-bit key in roughly $2^{128}$ iterations. It is sometimes suggested that symmetric key lengths be doubled to protect against future quantum attacks.
+
+\subsection{Risk assessment}
+
+Let $k$ be the number of years for which the keys need to be secure. Let $i$ be the number of years to harden cryptographic infrastructure to be secure against quantum computer attacks. Let $q$ be the number of years to build a large scale quantum computer. If $q<k+i$ then quantum computing is relevant.
+
+Moore's law states that power doubles every two years (exponential increase). Neven's law: quantum computers are gaining computational power on classical ones at a doubly exponential rate.
+
+The root cause for Neven's law is that if a quantum circuit has four quantum bits, it takes a classical circuit with 16 ordinary bits to achieve equivalent computational power. 
+
+\subsection{Post Quantum Cryptography}
+The idea is to design cryptosystems based on mathematical problems that are not solvable by Shor algorithm. Since 2015, NIST is actively researching new, quantum-resistant algorithms to improve and extend its official standards which are binding for all federal entities, including Digital signatures and Key exchange protocols.
+
+The NIST requires that public-key encryption shall include algorithms for key generation, encryption, and decryption, key encapsulation mechanism (KEM) shall include algorithms for key generation, encapsulation, and decapsulation, digital signature: shall include algorithms for key generation, signature generation and signature verification.
+
+

@@ -6,7 +6,7 @@ Cryptography refers to hidden writing. Its goal is to enable a secure communicat
 \begin{figure}
 	\centering
 	\includegraphics[width=0.7\linewidth]{Images/Chapter1/screenshot000}
-	\caption{}
+	\caption{Alice, Bob, and the adversary Eve}
 	\label{fig:chapter1_screenshot000}
 \end{figure}
 
@@ -92,7 +92,7 @@ Let:
 	\item $\varphi$ is a cipher such that $\forall k \in \mathcal{K}$
 \end{itemize} 
 
-$$\varphi_k : \mathcal{P} \rightarrow \mathcal{C}$$ is an encryption function.
+\[\varphi_k : \mathcal{P} \rightarrow \mathcal{C}\] is an encryption function.
 Furthermore $\varphi_k$ is invertible: there exists $\varphi_k ^{-1}(\varphi_k(m)) = m$.
 We will give a notion of probabilities:
 \begin{itemize}
@@ -106,7 +106,7 @@ We will give a notion of probabilities:
 We can assume $P(m) > 0$ because otherwise $m$ never occurs and we can remove it from $\mathcal{P}$. In the same way we assume $P(k) > 0$ and $P(c) > 0$. The two probability distribution $P(\mathcal{P})$ and $P(\mathcal{K})$ determine the
 probability distribution $P(\mathcal{C})$, because only one ciphertext can be obtained using the encryption algorithm $\varphi$ with a given plaintext and key.
 Clever boy assumption states that plaintext and the keys are indipendent. So we do not select a particular key for a particular plaintext, for any plaintext we can choose any key. A cipher is called perfect if:
-$$\forall m \in\mathcal{P} \land \forall c \in\mathcal{C} \Longrightarrow P(m) = P(m \mid c) $$
+\[\forall m \in\mathcal{P} \land \forall c \in\mathcal{C} \Longrightarrow P(m) = P(m \mid c) \]
 So the probability of having the plaintext $m$ is equal to the conditional probability of observing $m$ over the channel once you have seen the ciphertext $c$. The conditional probability $P(x \mid y)$ denotes the probability that $x$ occurs given that $y$ occurred. We say that $x$ and $y$ are independent if $P(x \land y) = P(x)P(y)$. The concept of independence formalises the perception that past events do not influence the outcome of future ones or provide any information about them. In other words, if two events are independent, the order in which they occur is of no importance. So seeing the ciphertext $c$ does not add any knowledge about the plaintext message sent, or any future message exchanged.
 
 Shannon theorem: let us fix an integer $n$. Assume that: keys, plaintext, ciphertext have all $n$ bits. Assume also that the plaintexts and the keys are independent (Clever boy assumption) and any $n$-bit string may be either a key or a plaintext. Then $\varphi$ is a perfect cipher if and only if both the following conditions hold:
@@ -117,12 +117,12 @@ Shannon theorem: let us fix an integer $n$. Assume that: keys, plaintext, cipher
 
 	\subsection{Consequences of Shannon Theorem}
 	
-	If $\varphi$ is a perfect cipher, then all ciphertexts have the same probability to be received. Even if Eve knows the probability distribution of the plaintexts, she observes is a perfectly random cipher. Hence Eve cannot recover any information on the sent message from the intercepted ciphertext. But we made a very big assumption: this is true only if Eve can intercept \textbf{one} ciphertext. If Eve intercepts more ciphertexts encrypted with the same key, then the Shannon theorem no longer guarantees perfect secrecy. So in practical sense, a perfect cipher is not unbreakable, so a perfect cipher is not necessarily ideal, because every time we need to use a different key (the key space has to be as large as the message space) also the key has to be as large as a message transferred. Additionally we did not guarantee any sort of integrity! 
+	If $\varphi$ is a perfect cipher, then all ciphertexts have the same probability to be received. Even if Eve knows the probability distribution of the plaintexts, she observes is a perfectly random cipher. Hence Eve cannot recover any information on the sent message from the intercepted ciphertext. But we made a very big assumption: this is true only if Eve can intercept \textbf{one} ciphertext. If Eve intercepts more ciphertexts encrypted with the same key, then the Shannon theorem no longer guarantees perfect secrecy. So in practical sense, a perfect cipher is not unbreakable, and not necessarily ideal, because every time we need to use a different key (the key space has to be as large as the message space) also the key has to be as large as a message transferred. Additionally we did not guarantee any sort of integrity! 
 
 \section{Vernam Cipher - One Time Pad}
 
 The One Time Pad is an example of a perfect cipher. We work under the same assumptions of the Shannon Theorem. In the Vernam cipher we define encryption by means of the bitwise XOR operation \ref{fig:vernam_cipher}:
-$$c = \varphi_k (m) = k \oplus m$$
+\[c = \varphi_k (m) = k \oplus m \]
 
 \begin{figure}
 	\centering
