@@ -1,3 +1,6 @@
+# ⚠ Notice
+
+This repository is now an archive. An updated version lives at [unitn-drive/applied-cryptography](https://github.com/unitn-drive/applied-cryptography).
 # Applied Cryptography
 Summary of the Applied Cryptography course given by professor Silvio Ranise. University of Trento 2022/2023. 
 If you are really interested in the topic you are adivised to read the book [A Graduate Course in Applied Cryptography](https://toc.cryptobook.us/) By Dan Boneh and Victor Shoup as the course is heavily inspired by it and this project contains some parts of it.
